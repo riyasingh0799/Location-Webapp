@@ -10,34 +10,42 @@ class App extends React.Component {
     this.state = {
       proof: null,
       zkurl: "http://localhost:3000/",
+      verifyURL: null,
       inputs: null
     };
   }
 
-    verify = async () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition( async (position) => {
-        let lat = position.coords.latitude.toFixed(7)
-        let lon = position.coords.longitude.toFixed(7)
-        // let zkURL = zkurl + "loc/proof?x="+lat+"&y="+lon+"&xr=0&yr=0"
-        let zkURL = this.state.zkurl + "loc/proof?x="+lat+"&y="+lon+"&xr="+lat+"&yr="+lon
+  verify = async () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition( async (position) => {
+      let lat = position.coords.latitude.toFixed(7)
+      let lon = position.coords.longitude.toFixed(7)
+      let verifyURL
+      // let zkURL = zkurl + "loc/proof?x="+lat+"&y="+lon+"&xr=0&yr=0"
+      let zkURL = this.state.zkurl + "loc/proof?x="+lat+"&y="+lon+"&xr="+lat+"&yr="+lon
+      // let zkURL = zkurl + "loc/proof?x=5&y=5&xr=0&yr=0"
+      console.log(zkURL)
 
-        // let zkURL = zkurl + "loc/proof?x=5&y=5&xr=0&yr=0"
-        console.log(zkURL)
-        axios.get(zkURL).then(res => {
-            this.setState({ proof: res.data.proof }); 
-            this.setState({ inputs: res.data.inputs });
+      await axios.get(zkURL).then(res => {
+          this.setState({ proof: res.data.proof,                                                                //JSON object
+            verifyURL: "http://localhost:3000/loc/verify?location_proof=" + encodeURI(JSON.stringify(res.data))});       //loc_proof["proof", "inputs"]     
+          console.log(this.state.proof)
+          console.log((this.state.verifyURL))
+
+          // verifyURL= "http://localhost:3000/loc/verify?proof=" + JSON.stringify(this.state.proof)
+          // console.log((verifyURL))
           document.getElementById('verification').innerHTML = JSON.stringify(this.state.proof)
-        })
-        console.log(JSON.stringify(this.state.proof))
-        zkURL = this.state.zkurl + "loc/verify?proof=" + this.state.proof
-        // zkURL = zkurl + "loc/verify?proof=" +JSON.stringify(proof)
+      })
+      console.log((this.state.verifyURL))
 
-        console.log(zkURL)
-        // axios.get(zkURL).then(console.log)
-      });
-    } else {
-        document.getElementById('verification').innerHTML = "Geolocation is not supported by this browser.";
+      axios.get(this.state.verifyURL).then(res => {
+        console.log(res)
+      }).catch((e) => {
+        console.log(e)
+      })
+    })
+  } else {
+      document.getElementById('verification').innerHTML = "Geolocation is not supported by this browser.";
     }
   }
 
